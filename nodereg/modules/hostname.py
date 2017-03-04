@@ -10,7 +10,7 @@ class Hostname(AbstractModule):
 
     def _tag_to_hostname(self) -> str:
         tag_name = self.config['tag_name']
-        return str(self.node['tags'].get(tag_name))
+        return str(self.node['tags'].get(tag_name)).lower()
 
     def _ip_to_hostname(self) -> str:
         octets = self.config['ip_address']['octets']

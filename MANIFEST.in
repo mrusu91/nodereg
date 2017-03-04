@@ -1,2 +1,3 @@
-include pylintrc
+include LICENSE
 include nodereg/config.yaml
+include pylintrc

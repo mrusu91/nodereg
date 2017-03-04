@@ -72,7 +72,7 @@ TinyCert.org
 ^^^^^^^^^^^^
     Downloads a CA and makes it available system wide.
     Generates a certificate for node FQDN and IP Address.
-    Allow downloads other certificates.
+    Allow downloading other certificates.
     **NOTE:** This module downloads private keys as well.
 
 Etcd
@@ -91,7 +91,12 @@ AWS Instance IAM Role policy needed:
       "Statement": [
           {
               "Effect": "Allow",
-              "Action": "autoscaling:Describe*",
+              "Action": "autoscaling:DescribeAutoScalingGroups",
+              "Resource": "*"
+          },
+          {
+              "Effect": "Allow",
+              "Action": "autoscaling:DescribeAutoScalingInstances",
               "Resource": "*"
           }
       ]
@@ -120,6 +125,12 @@ Default Config
     # in a container and you want to change the host.
     # Set it to false if no chroot required
     chroot_path: /media/root
+    # list of modules to run
+    enabled_modules:
+      - hostname
+      - hosted_zone
+      - tinycert
+      - etcd
   
   hostname:
     # The glue between hostname components

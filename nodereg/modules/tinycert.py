@@ -1,6 +1,6 @@
 import logging
 import subprocess
-from os import makedirs, path
+from os import makedirs, path, remove, symlink
 from typing import Any, Dict, Optional
 
 from tinycert import Session
@@ -22,6 +22,16 @@ class TinyCert(AbstractModule):
         log.info('Writing file %s', file_path)
         with open(file_path, 'w') as _file:
             _file.write(file_content)
+
+    def _create_symlink(
+        self,
+        src_file: str,
+        link_file: str,
+    ) -> None:
+        if path.isfile(link_file):
+            remove(link_file)
+        log.info('Creating symlink %s -> %s', link_file, src_file)
+        symlink(src_file, link_file)
 
     def _find_cert_by_san(
         self,
@@ -76,10 +86,10 @@ class TinyCert(AbstractModule):
     def _ensure_ca(self, session: Session) -> Dict[str, Any]:
         ca_details = session.ca.details(self.config['ca_id'])
         log.info('Ensuring CA certificate %r is present', ca_details)
-        # TODO: guard on usafe filename
+        ca_name = ca_details['CN'].lower().replace(' ', '-')
         ca_file = path.join(
             self.config['ca_path'],
-            ca_details['CN'].lower() + '.pem',
+            ca_name + '.pem',
         )
         if not path.isfile(ca_file):
             ca_pem = session.ca.get(self.config['ca_id'])['pem']
@@ -100,12 +110,16 @@ class TinyCert(AbstractModule):
         self,
         session: Session,
         cert_id: int,
+        node_certificate: bool=False,
     ) -> None:
         cert_details = session.cert.details(cert_id)
         log.info('Ensuring certificate %r is present', cert_details)
-        cert_name = cert_details['CN'].lower()
+        if node_certificate:
+            cert_name = 'node'
+        else:
+            cert_name = cert_details['CN'].lower().replace(' ', '-')
 
-        # certificate crt file
+        # certificate file
         cert_file = path.join(
             self.config['certificates_path'],
             cert_name + '.pem',
@@ -126,6 +140,18 @@ class TinyCert(AbstractModule):
             self._write_file(key_file, key_pem)
         else:
             log.info('%s already present', key_file)
+
+        if node_certificate:
+            cert_link = path.join(
+                self.config['certificates_path'],
+                'host.pem',
+            )
+            self._create_symlink(cert_file, cert_link)
+            key_link = path.join(
+                self.config['certificates_path'],
+                'host-key.pem',
+            )
+            self._create_symlink(key_file, key_link)
 
     def run(  # type: ignore # pylint: disable=arguments-differ
         self,
@@ -151,7 +177,11 @@ class TinyCert(AbstractModule):
                     ca_details,
                     fqdn,
                 )
-            self._ensure_certificate(session, cert_details['id'])
+            self._ensure_certificate(
+                session,
+                cert_details['id'],
+                node_certificate=True,
+            )
 
         for cert_id in self.config['certificates']:
             self._ensure_certificate(session, cert_id)

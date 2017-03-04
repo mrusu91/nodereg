@@ -166,8 +166,8 @@ class Etcd(AbstractModule):
     def _create_systemd_dropin(self, initial_cluster: str, state: str) -> None:
         file_content = '\n'.join([
             '[Service]',
-            'Environment=ETCD_INITIAL_CLUSTER="%s"' % initial_cluster,
-            'Environment=ETCD_INITIAL_CLUSTER_STATE="%s"' % state,
+            'Environment=ETCD_INITIAL_CLUSTER=%s' % initial_cluster,
+            'Environment=ETCD_INITIAL_CLUSTER_STATE=%s' % state,
         ])
         with open(self.config['drop_in_file'], 'w') as _file:
             _file.write(file_content)

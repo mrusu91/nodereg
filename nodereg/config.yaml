@@ -1,10 +1,16 @@
 base:
-  # The tag used to detect if node is running build an AMI from it.
+  # The tag used to detect if node is running to build an AMI from it.
   ami_build_tag: is_ami_build
   # Chroot to this path. Usefull if nodereg runs
   # in a container and you want to change the host.
   # Set it to false if no chroot required
   chroot_path: /media/root
+  # list of modules to run
+  enabled_modules:
+    - hostname
+    - hosted_zone
+    - tinycert
+    - etcd
 
 hostname:
   # The glue between hostname components
@@ -26,7 +32,7 @@ hosted_zone:
 tinycert:
   email: test
   passphrase: test
-  api_token: test
+  api_key: test
   # Make sure the CA cert is present and recognized system-wide
   # tinycert CA id
   # NOTE: the common name of the certificate is used as filename

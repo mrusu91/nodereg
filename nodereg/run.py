@@ -1,5 +1,6 @@
 import argparse
 import logging
+import sys
 from os import path
 from time import sleep
 from typing import Any, Dict, Optional
@@ -61,34 +62,39 @@ class Registrator(object):
                 sleep(3600)
 
         chroot_path = self.config['base']['chroot_path']
-
-        # Hostname
-        hostname_module = Hostname(
-            self.node,
-            self.config['hostname'],
-            chroot_path,
-        )
-        hostname = hostname_module.run()
-        # Hosted Zone
-        hosted_zone_module = HostedZone(
-            self.node,
-            self.config['hosted_zone'],
-        )
-        fqdn = hosted_zone_module.run(hostname)
-        # TinyCert
-        tinycert_module = TinyCert(
-            self.node,
-            self.config['tinycert'],
-            chroot_path,
-        )
-        tinycert_module.run(fqdn)
-        # Etcd
-        etcd_module = Etcd(
-            self.node,
-            self.config['etcd'],
-            chroot_path,
-        )
-        etcd_module.run()
+        hostname = None
+        fqdn = None
+        if 'hostname' in self.config['base']['enabled_modules']:
+            hostname_module = Hostname(
+                self.node,
+                self.config['hostname'],
+                chroot_path,
+            )
+            hostname = hostname_module.run()
+        if 'hosted_zone' in self.config['base']['enabled_modules']:
+            if not hostname:
+                raise Exception('Dependency module hostname is not enabled')
+            hosted_zone_module = HostedZone(
+                self.node,
+                self.config['hosted_zone'],
+            )
+            fqdn = hosted_zone_module.run(hostname)
+        if 'tinycert' in self.config['base']['enabled_modules']:
+            if not fqdn:
+                raise Exception('Dependency module hosted_zone is not enabled')
+            tinycert_module = TinyCert(
+                self.node,
+                self.config['tinycert'],
+                chroot_path,
+            )
+            tinycert_module.run(fqdn)
+        if 'etcd' in self.config['base']['enabled_modules']:
+            etcd_module = Etcd(
+                self.node,
+                self.config['etcd'],
+                chroot_path,
+            )
+            etcd_module.run()
 
 
 def _get_args() -> argparse.Namespace:
@@ -105,6 +111,7 @@ def _get_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     args = _get_args()
     custom_config_file = args.config
     registrator = Registrator(custom_config_file)

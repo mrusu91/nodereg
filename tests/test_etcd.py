@@ -108,8 +108,8 @@ def build_initial_cluster(config, instances):
 def get_file_content(initial_cluster, state):
     file_content = '\n'.join([
         '[Service]',
-        'Environment=ETCD_INITIAL_CLUSTER="%s"' % initial_cluster,
-        'Environment=ETCD_INITIAL_CLUSTER_STATE="%s"' % state,
+        'Environment=ETCD_INITIAL_CLUSTER=%s' % initial_cluster,
+        'Environment=ETCD_INITIAL_CLUSTER_STATE=%s' % state,
     ])
     return file_content
 

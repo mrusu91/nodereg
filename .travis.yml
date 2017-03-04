@@ -1,0 +1,12 @@
+sudo: required
+
+language: python
+
+services:
+  - docker
+
+before_install:
+  - docker build -f Dockerfile.dev -t nodereg .
+
+script:
+  - docker run --entrypoint tox nodereg
